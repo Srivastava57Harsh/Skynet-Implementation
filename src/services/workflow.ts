@@ -10,6 +10,7 @@ import {
 import config from "../config/config.js";
 import { researcherAgent } from "./agents/researcher.js";
 import { chartGenAgent } from "./agents/chartGen.js";
+import { Conversation } from "../models/conversation.js";
 
 const AgentState = Annotation.Root({
   messages: Annotation<BaseMessage[]>({
@@ -31,30 +32,44 @@ const llm = new ChatOpenAI({
 const supervisorPrompt = ChatPromptTemplate.fromMessages([
   [
     "system",
-    "You are a supervisor tasked with managing the following agents: researcher and chart_generator. Your job is to decide which agent should act next.\n\nYou MUST respond with EXACTLY one of these words:\n- researcher\n- chart_generator\n\nIf the conversation seems complete or requires research, respond with 'researcher' by default.",
+    `You are a supervisor tasked with managing agents. You have access to conversation history.
+    
+    Previous conversations:
+    {history}
+    
+    Current conversation:
+    {current_message}
+    
+    Based on the context and history, decide which agent should act next:
+    - researcher
+    - chart_generator`
   ],
   new MessagesPlaceholder("messages"),
-  [
-    "human",
-    "Based on the above conversation, which agent should act next? Respond with EXACTLY either 'researcher' or 'chart_generator'.",
-  ],
 ]);
 
 const supervisorChain = RunnableSequence.from([
+  {
+    messages: (input: any) => input.messages,
+    history: async () => {
+      const conversations = await Conversation.find({})
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .lean();
+      return conversations.length ? 
+        conversations.map(c => `Q: ${c.userQuery}\nA: ${c.messages.map(m => m.content).join('\n')}`).join('\n\n') :
+        "No previous conversations";
+    },
+    current_message: (input: any) => input.messages[input.messages.length - 1].content
+  },
   supervisorPrompt,
   llm,
   (output) => {
-    console.log("Supervisor output:", output.content);
     const response = output.content.toLowerCase().trim();
-    if (response !== "researcher" && response !== "chart_generator") {
-      console.log("Invalid response, defaulting to researcher");
-      return { messages: [], next: "researcher" };
-    }
     return {
       messages: [],
-      next: response,
+      next: response === "chart_generator" ? "chart_generator" : "researcher"
     };
-  },
+  }
 ]);
 
 // Nodes
@@ -104,4 +119,27 @@ export function getWorkflowGraph() {
     ]);
 
   return workflow.compile();
+}
+
+export async function invokeWithHistory(message: string, sessionId: string) {
+  // Get last 5 relevant conversations
+  const history = await Conversation.find({}).sort({ createdAt: -1 }).limit(5);
+
+  const historyContext = history
+    .map(
+      (conv) =>
+        `User: ${conv.userQuery}\nResponse: ${conv.messages
+          .map((m) => m.content)
+          .join("\n")}`
+    )
+    .join("\n\n");
+
+  const graph = getWorkflowGraph();
+  return await graph.invoke({
+    messages: [new HumanMessage({ content: message })],
+    configurable: {
+      history: historyContext,
+      current_message: message,
+    },
+  });
 }

@@ -17,6 +17,9 @@ export const config = {
   server: {
     port: process.env.PORT || 3000,
   },
+  mongodb: {
+    uri: process.env.MONGODB_URI || "mongodb://localhost:27017/agent_rag",
+  },
 };
 
 export default config;

@@ -1,12 +1,30 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import mongoose from "mongoose";
 import chatRoutes from "./routes/chatRoutes.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// MongoDB connection with proper options
+mongoose
+  .connect(process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/agent_rag", {
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+  })
+  .then(() => console.log("MongoDB connected successfully"))
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1); // Exit if can't connect to DB
+  });
+
+// Handle MongoDB connection errors
+mongoose.connection.on("error", (err) => {
+  console.error("MongoDB connection error:", err);
+});
 
 app.use(cors());
 app.use(express.json());
