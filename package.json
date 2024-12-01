@@ -1,0 +1,33 @@
+{
+  "name": "laama-index",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "tsc-watch --onSuccess \"npm start\""
+  },
+  "dependencies": {
+    "@langchain/community": "^0.3.16",
+    "@langchain/core": "^0.3.19",
+    "@langchain/langgraph": "^0.2.23",
+    "@langchain/openai": "^0.3.14",
+    "canvas": "^2.11.2",
+    "cors": "^2.8.5",
+    "d3": "^7.9.0",
+    "dotenv": "^16.4.5",
+    "esm-hook": "^0.1.4",
+    "express": "^4.21.1",
+    "tsc-watch": "^6.2.1",
+    "tslab": "^1.0.22",
+    "uuid": "^11.0.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/d3": "^7.4.3",
+    "@types/express": "^5.0.0",
+    "typescript": "^5.7.2"
+  }
+}

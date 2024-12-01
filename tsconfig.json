@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",                   // Keep as is
+    "module": "ESNext",                   // Use ESNext for module support
+    "moduleResolution": "bundler",           // Ensure Node.js resolution strategy
+    "strict": true,                       // Enable strict mode for type safety
+    "esModuleInterop": true,              // Allow default imports for CommonJS modules
+    "skipLibCheck": true,                 // Skip lib check for faster builds
+    "outDir": "dist",                     // Output directory for compiled JS
+    "rootDir": "src",                     // Root directory for TypeScript files
+    "resolveJsonModule": true             // Enable JSON imports
+  },
+  "include": ["src/**/*.ts"],             // Include TypeScript files under src
+  "exclude": ["node_modules", "dist"]     // Exclude node_modules and dist folder
+}
